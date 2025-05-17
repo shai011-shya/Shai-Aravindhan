@@ -1,0 +1,43 @@
+AI-Driven Traffic Accident Analysis and Prediction
+
+Python Example Code Using Machine Learning (Random Forest)
+
+import pandas as pd import numpy as np from sklearn.model_selection import train_test_split from sklearn.ensemble import RandomForestClassifier from sklearn.metrics import classification_report, accuracy_score
+
+Load sample dataset (assuming CSV format with relevant features)
+
+data = pd.read_csv('traffic_accidents.csv')
+
+Preview data
+
+print(data.head())
+
+Feature selection (customize columns based on actual dataset)
+
+features = ['weather', 'traffic_density', 'hour', 'location_id'] X = data[features] y = data['accident_occurred']  # Binary classification: 0 - No, 1 - Yes
+
+Convert categorical features to numerical (if any)
+
+X = pd.get_dummies(X)
+
+Split the dataset
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+Initialize and train model
+
+model = RandomForestClassifier(n_estimators=100, random_state=42) model.fit(X_train, y_train)
+
+Make predictions
+
+y_pred = model.predict(X_test)
+
+Evaluate model
+
+print("Accuracy:", accuracy_score(y_test, y_pred)) print("Classification Report:\n", classification_report(y_test, y_pred))
+
+Predict on new data
+
+new_data = pd.DataFrame({ 'weather': ["Rain"], 'traffic_density': ["High"], 'hour': [18], 'location_id': [123] }) new_data = pd.get_dummies(new_data) new_data = new_data.reindex(columns=X.columns, fill_value=0)
+
+prediction = model.predict(new_data) print("Accident Likelihood:", "Yes" if prediction[0] == 1 else "No")
