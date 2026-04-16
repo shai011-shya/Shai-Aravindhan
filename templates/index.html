@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Cloud Data Storage Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <h1>My Cloud & Data Storage Database</h1>
+      <p>
+        Manage your own cloud data records from one page.
+        Save what you store, where it is hosted, and what type of data it contains.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Add a new cloud record</h2>
+      <form id="record-form">
+        <div class="grid">
+          <label>
+            Title
+            <input type="text" name="title" required placeholder="Example: Client Backups" />
+          </label>
+          <label>
+            Data Type
+            <input type="text" name="data_type" required placeholder="Example: Documents" />
+          </label>
+          <label>
+            Storage Region
+            <input type="text" name="storage_region" required placeholder="Example: US-East" />
+          </label>
+        </div>
+        <label>
+          Description
+          <textarea name="description" rows="3" placeholder="Optional details about this record..."></textarea>
+        </label>
+        <button type="submit">Save to Database</button>
+      </form>
+      <p id="message"></p>
+    </section>
+
+    <section class="card">
+      <h2>Stored Records</h2>
+      <div id="record-list" class="record-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('record-form');
+    const message = document.getElementById('message');
+    const list = document.getElementById('record-list');
+
+    async function loadRecords() {
+      const response = await fetch('/api/records');
+      const records = await response.json();
+
+      if (!records.length) {
+        list.innerHTML = '<p class="empty">No cloud records yet. Add one above.</p>';
+        return;
+      }
+
+      list.innerHTML = records.map(record => `
+        <article class="record">
+          <header>
+            <h3>${record.title}</h3>
+            <button data-id="${record.id}" class="delete-btn">Delete</button>
+          </header>
+          <p><strong>Data Type:</strong> ${record.data_type}</p>
+          <p><strong>Region:</strong> ${record.storage_region}</p>
+          <p><strong>Description:</strong> ${record.description || '—'}</p>
+          <small>Created: ${new Date(record.created_at).toLocaleString()}</small>
+        </article>
+      `).join('');
+
+      document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+          await fetch(`/api/records/${button.dataset.id}`, { method: 'DELETE' });
+          loadRecords();
+        });
+      });
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      message.textContent = '';
+
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      const response = await fetch('/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const body = await response.json();
+      if (!response.ok) {
+        message.textContent = body.error || 'Failed to save record.';
+        message.className = 'error';
+        return;
+      }
+
+      form.reset();
+      message.textContent = 'Record saved successfully.';
+      message.className = 'success';
+      loadRecords();
+    });
+
+    loadRecords();
+  </script>
+</body>
+</html>
